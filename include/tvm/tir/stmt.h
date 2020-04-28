@@ -206,6 +206,8 @@ class StoreNode : public StmtNode {
   PrimExpr index;
   /*! \brief The predicate to mask which lanes would be stored. */
   PrimExpr predicate;
+  
+  bool atomic_add;
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("buffer_var", &buffer_var);
@@ -232,7 +234,8 @@ class StoreNode : public StmtNode {
   TVM_DLL static Stmt make(Var buffer_var,
                            PrimExpr value,
                            PrimExpr index,
-                           PrimExpr predicate);
+                           PrimExpr predicate,
+                           bool _atomic_add = false);
 
   static constexpr const char* _type_key = "Store";
   TVM_DECLARE_FINAL_OBJECT_INFO(StoreNode, StmtNode);

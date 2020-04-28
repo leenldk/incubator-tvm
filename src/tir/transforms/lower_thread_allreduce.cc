@@ -153,6 +153,7 @@ class ThreadAllreduceBuilder final : public StmtExprMutator {
       reduce_set.insert(v);
     }
     size_t nmatch = 0;
+    int reduce_type = 0;
     std::vector<ThreadEntry> vred, vpar;
     for (const AttrStmtNode* attr : thread_extents_) {
       ThreadEntry e;
@@ -163,6 +164,7 @@ class ThreadAllreduceBuilder final : public StmtExprMutator {
       CHECK_GE(e.scope.dim_index, 0)
           << "vthread do not work with cross thread reduction";
       if (e.scope.rank == 1) {
+        reduce_type = -1;
         CHECK(arith::GetConstInt(attr->value, &(e.extent)))
             << "Need constant extent for reduce set " << iv;
         if (reduce_set.count(iv->var.get())) {
@@ -172,9 +174,38 @@ class ThreadAllreduceBuilder final : public StmtExprMutator {
           vpar.push_back(e);
         }
       }
+      else if (e.scope.rank == 0) 
+      {
+        reduce_type = 1;
+        if(reduce_set.count(iv -> var.get()))
+        {
+          vred.push_back(e);
+          ++nmatch;
+        }
+        else
+        {
+          vpar.push_back(e);
+        }
+      }
     }
     CHECK_EQ(nmatch, reduce_set.size())
         << "Not all reduce index are presented in the context";
+    if(reduce_type == 1)
+    {
+      std::sort(vred.begin(), vred.end());
+      std::sort(vpar.begin(), vpar.end());
+      int reduce_extent, group_extent;
+      PrimExpr reduce_index = FlattenThread(vred, &reduce_extent);
+      PrimExpr group_index = FlattenThread(vpar, &group_extent);
+      std::vector<Stmt> stores(size);
+      for(size_t i = 0; i < size; ++i)
+      {
+        PrimExpr pred = const_true(types[i].lanes());
+        Var buffer_var = Downcast<Var>(call -> args[2+size+i]);
+        stores[i] = StoreNode::make(buffer_var, values[i], 0, pred, true);
+      }
+      return SeqStmt::Flatten(stores);
+    }
     std::sort(vred.begin(), vred.end());
     std::sort(vpar.begin(), vpar.end());
     // the size of each index.

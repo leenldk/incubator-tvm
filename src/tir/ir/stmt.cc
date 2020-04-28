@@ -118,7 +118,7 @@ TVM_REGISTER_GLOBAL("tir.For")
 });
 
 
-Stmt StoreNode::make(Var buffer_var, PrimExpr value, PrimExpr index, PrimExpr predicate) {
+Stmt StoreNode::make(Var buffer_var, PrimExpr value, PrimExpr index, PrimExpr predicate, bool _atomic_add) {
   CHECK(value.defined());
   CHECK(index.defined());
   CHECK(predicate.defined());
@@ -130,6 +130,7 @@ Stmt StoreNode::make(Var buffer_var, PrimExpr value, PrimExpr index, PrimExpr pr
   node->value = std::move(value);
   node->index = std::move(index);
   node->predicate = std::move(predicate);
+  node->atomic_add = _atomic_add;
   return Stmt(node);
 }
 
