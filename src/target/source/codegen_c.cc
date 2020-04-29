@@ -696,11 +696,21 @@ void CodeGenC::VisitExpr_(const LoadNode* op, std::ostream& os) {  // NOLINT(*)
 
 void CodeGenC::VisitStmt_(const StoreNode* op) {
   DataType t = op->value.dtype();
+  static bool prev_atomic_add = false;
   if (t.lanes() == 1) {
     std::string value = this->PrintExpr(op->value);
     std::string ref  = this->GetBufferRef(t, op->buffer_var.get(), op->index);
     this->PrintIndent();
-    stream << ref << " = " << value << ";\n";
+    if(prev_atomic_add)
+    {
+      prev_atomic_add = false;
+      stream << "atomicAdd( &" << ref << " , " << value << " );\n";
+    }
+    else
+    {
+      if(op -> atomic_add) prev_atomic_add = true;
+      stream << ref << " = " << value << ";\n";
+    }
   } else {
     CHECK(is_one(op->predicate))
         << "Predicated store is not supported";
