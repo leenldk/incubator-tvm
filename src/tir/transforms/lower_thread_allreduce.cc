@@ -166,9 +166,8 @@ class ThreadAllreduceBuilder final : public StmtExprMutator {
       if (e.scope.rank == 1) {
         const auto* ptr = attr->value.as<IntImmNode>();
         CHECK(ptr)
-        reduce_type = -1;
-        CHECK(arith::GetConstInt(attr->value, &(e.extent)))
             << "Need constant extent for reduce set " << iv;
+        reduce_type = -1;
         e.extent = static_cast<int>(ptr->value);
         if (reduce_set.count(iv->var.get())) {
           vred.push_back(e);
